@@ -13,18 +13,19 @@ class SineWaveDataset(Dataset):
         """Store pre-generated trajectories.
 
         Args:
-            sequences: Noisy input sequences shaped [N, T, 1].
-            targets: Clean target sequences shaped [N, T, 1].
+            sequences: Noisy input sequences shaped [N, T].
+            targets: Clean target sequences shaped [N, T].
         """
-        pass
+        self.sequences = sequences
+        self.targets = targets
 
     def __len__(self) -> int:
         """Return dataset size."""
-        pass
+        return self.sequences.shape[0]
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Retrieve a single (noisy, clean) trajectory pair."""
-        pass
+        return self.sequences[idx], self.targets[idx]
 
 
 def generate_sine_wave_batch(
@@ -34,7 +35,14 @@ def generate_sine_wave_batch(
     device: torch.device,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Create a batch of noisy/clean sine-wave trajectories."""
-    pass
+    timestamps = torch.linspace(0, 2 * torch.pi, seq_length, device=device)  # [T]
+
+    frequencies = torch.rand(batch_size, 1, device=device) * 4.0 + 1.0  # [B, 1]
+    phases = torch.rand(batch_size, 1, device=device) * 2 * torch.pi  # [B, 1]
+
+    clean_sequences = torch.sin(frequencies * timestamps + phases)  # [B, T]
+    
+    return clean_sequences, clean_sequences
 
 
 def build_dataloader(
@@ -45,4 +53,22 @@ def build_dataloader(
     shuffle: bool = True,
 ) -> DataLoader:
     """Construct a DataLoader over synthetic sine trajectories."""
-    pass
+    # Generate dataset
+    num_samples = 10000
+    sequences, targets = generate_sine_wave_batch(
+        batch_size=num_samples,
+        seq_length=seq_length,
+        noise_std=noise_std,
+        device=device,
+    )
+
+    # Wrap in Dataset and DataLoader
+    dataset = SineWaveDataset(sequences, targets)
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+    )
+
+    return dataloader

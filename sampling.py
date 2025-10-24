@@ -4,7 +4,9 @@ from typing import Optional
 
 import torch
 
-from .diffusion import Diffusion1D
+from diffusion import Diffusion1D
+
+from utils import set_seed
 
 
 def generate_sequences(
@@ -15,4 +17,12 @@ def generate_sequences(
     seed: Optional[int] = None,
 ) -> torch.Tensor:
     """Sample new sine-like sequences using the trained diffusion model."""
-    pass
+    set_seed(seed or 42)
+
+    # Create shape tuple
+    shape = (num_samples, seq_length)
+
+    # Generate samples
+    samples = diffusion.sample(shape)
+
+    return samples

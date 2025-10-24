@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Temporary outputs (generated during training/testing)
+outputs/
+
+# Note: assets/ folder contains documentation images and should be committed
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Models and checkpoints
+checkpoints/
+*.pth
+*.pt

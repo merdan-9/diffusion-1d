@@ -13,5 +13,9 @@ class DiffusionConfig:
     noise_std: float = 0.1
     batch_size: int = 64
     learning_rate: float = 1e-3
-    num_epochs: int = 10
+    num_epochs: int = 1000
     device: str = "cuda"
+    beta_start: float = 0.0001
+    beta_end: float = 0.02
+    hidden_dim: int = 128
+    time_dim: int = 128
