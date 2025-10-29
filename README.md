@@ -211,6 +211,7 @@ The model learns the **structure of sine waves** by seeing them at every corrupt
 
 **Watch:**
 - [What are Diffusion Models?](https://www.youtube.com/watch?v=fbLgFrlTnGU) - 15 min video explainer
+- [Diffusion Models Explained](https://www.youtube.com/watch?v=ifCDXFdeaaM&list=PLJV_el3uVTsNi7PgekEUFsyVllAJXRsP-&index=4) - (In Chinese 李宏毅)
 
 **Build:**
 - Extend to 2D (MNIST digits)
