@@ -100,10 +100,16 @@ Check `outputs/sampled_sequences.png` to see your AI's artwork!
 
 Initial: 0.66 → Final: 0.18 (that's a 73% improvement, if you're into stats)
 
-**Generated samples:**
-![Results](assets/sampled_sequences.png)
+**Generated samples - MLP vs UNet:**
 
-Look at those smooth bois! 😍
+| MLP (Simple) | UNet (Advanced) |
+|--------------|-----------------|
+| ![MLP Results](assets/sampled_sequences_mlp.png) | ![UNet Results](assets/sampled_sequences_unet.png) |
+
+**MLP:** Simple 3-layer network (fast, ~50K params)
+**UNet:** Multi-scale architecture with skip connections (~500K params)
+
+Both generate beautiful sine waves, but UNet captures finer details! 🎨
 
 ---
 
@@ -114,16 +120,30 @@ Edit `config.py`:
 ```python
 @dataclass
 class DiffusionConfig:
-    num_epochs: int = 10        # More epochs = better (but slower)
+    model_type: str = "mlp"      # "mlp" or "unet" - Switch models!
+    num_epochs: int = 10         # More epochs = better (but slower)
     timesteps: int = 100         # More steps = smoother results
     batch_size: int = 64         # GPU go brrr? Increase this
+    hidden_dim: int = 128        # Model capacity (bigger = more powerful)
     device: str = "cuda"         # Got GPU? Use it!
 ```
 
+**Model Comparison:**
+
+| Feature | MLP | UNet |
+|---------|-----|------|
+| Parameters | ~50K | ~500K |
+| Training Speed | ⚡ Fast | 🐢 Slower (10x) |
+| Sample Quality | ✅ Good | ✨ Excellent |
+| Memory Usage | 💚 Low | 🟡 Higher |
+| Architecture | Simple feedforward | Multi-scale + skip connections |
+
 **Pro tips:**
+- 🎯 **Try UNet first!** Set `model_type = "unet"` for best quality
 - 🐢 CPU only? Set `device = "cpu"` and `batch_size = 32`
-- 🏎️ Want it faster? Set `timesteps = 50` and `num_epochs = 5`
-- 🎨 Want better quality? Set `timesteps = 1000` and `num_epochs = 50`
+- 🏎️ Want it faster? Use `model_type = "mlp"`, `timesteps = 50`, `num_epochs = 5`
+- 🎨 Want better quality? Use `model_type = "unet"`, `timesteps = 1000`, `num_epochs = 50`
+- 💾 Low memory? Set `hidden_dim = 64` to reduce model size
 
 ---
 
@@ -133,7 +153,8 @@ class DiffusionConfig:
 diffusion-1d/
 ├── main.py           → Press play here 🎮
 ├── config.py         → Tweak knobs here 🎛️
-├── model.py          → The brain 🧠
+├── model.py          → MLP brain 🧠 (simple)
+├── model_unet.py     → UNet brain 🧠🔥 (advanced)
 ├── diffusion.py      → The magic ✨
 ├── train.py          → The learning 📚
 ├── data.py           → Sine wave factory 🏭
@@ -143,9 +164,10 @@ diffusion-1d/
 
 **Files ranked by importance:**
 1. `main.py` - Start here
-2. `diffusion.py` - Where magic happens
-3. `model.py` - The actual AI
-4. Everything else - Supporting cast
+2. `config.py` - Switch between MLP/UNet here!
+3. `diffusion.py` - Where magic happens
+4. `model.py` & `model_unet.py` - Two different AI architectures
+5. Everything else - Supporting cast
 
 ---
 
@@ -198,6 +220,50 @@ If you know what noise was added, you can subtract it!
 **Why it works:**
 
 The model learns the **structure of sine waves** by seeing them at every corruption level. It knows what "sine wave under noise" looks like, so it can gradually recover it!
+
+</details>
+
+<details>
+<summary><b>🏗️ Why UNet Works Better (Architecture Deep Dive)</b></summary>
+
+### MLP Architecture (Simple)
+
+```
+Input [64] → Flatten → Dense → Dense → Output [64]
+```
+
+**Problem:** Treats every position independently, loses spatial structure.
+
+### UNet Architecture (Advanced)
+
+```
+Input [64]
+    ↓
+[Encoder Path - Downsampling]
+    64 → 32 → 16 → 8  (learn hierarchical features)
+    ↓
+[Bottleneck]
+    8 (deepest understanding)
+    ↓
+[Decoder Path - Upsampling + Skip Connections]
+    8 → 16 → 32 → 64  (reconstruct with fine details)
+    ↓
+Output [64]
+```
+
+**Key Innovation: Skip Connections**
+
+The encoder's high-resolution features jump directly to the decoder:
+- **Encoder 64** → Skip → **Decoder 64** (preserves fine details!)
+- **Encoder 32** → Skip → **Decoder 32** (preserves medium features)
+- **Encoder 16** → Skip → **Decoder 16** (preserves structure)
+
+**Why This Matters:**
+1. **Multi-scale processing** - Understands both "big picture" and "fine details"
+2. **Skip connections** - Preserves information lost in downsampling
+3. **Convolutions** - Learns position-independent patterns (works on shifted signals)
+
+This is why Stable Diffusion, DALL-E, and all top diffusion models use U-Net!
 
 </details>
 

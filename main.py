@@ -9,18 +9,50 @@ from config import DiffusionConfig
 from data import build_dataloader
 from diffusion import Diffusion1D
 from model import NoisePredictor
+from model_unet import UNet1D
 from sampling import generate_sequences
 from schedules import linear_beta_schedule
 from train import DiffusionTrainer
 from utils import set_seed, plot_sequences
 
+
+def create_model(config: DiffusionConfig, device: torch.device):
+    """Create noise prediction model based on config.
+
+    Args:
+        config: Configuration object with model_type and hyperparameters
+        device: Device to place model on (cpu or cuda)
+
+    Returns:
+        Model instance (NoisePredictor or UNet1D) on specified device
+    """
+    if config.model_type == "mlp":
+        model = NoisePredictor(
+            seq_length=config.seq_length,
+            hidden_dim=config.hidden_dim,
+            time_dim=config.time_dim
+        )
+        print(f"Created MLP model")
+    elif config.model_type == "unet":
+        model = UNet1D(
+            seq_length=config.seq_length,
+            hidden_dim=config.hidden_dim,
+            time_dim=config.time_dim
+        )
+        print(f"Created UNet1D model")
+    else:
+        raise ValueError(f"Unknown model_type: '{config.model_type}'. Must be 'mlp' or 'unet'")
+
+    return model.to(device)
+
+
 def train_model(config: DiffusionConfig, device: torch.device) -> str:
     """Train a diffusion model and return checkpoint path.
-      
+
     Args:
         config: Configuration object with hyperparameters
         device: Device to train on (cpu or cuda)
-        
+
     Returns:
         Path to saved checkpoint
     """
@@ -28,7 +60,7 @@ def train_model(config: DiffusionConfig, device: torch.device) -> str:
     betas = linear_beta_schedule(config.timesteps, config.beta_start, config.beta_end)
 
     # Create model
-    model = NoisePredictor(seq_length=config.seq_length, hidden_dim=config.hidden_dim, time_dim=config.time_dim).to(device)
+    model = create_model(config, device)
 
     # Create diffusion object
     diffusion = Diffusion1D(
@@ -63,11 +95,15 @@ def train_model(config: DiffusionConfig, device: torch.device) -> str:
     trainer.save_checkpoint(checkpoint_path)
     print(f"Model saved to {checkpoint_path}")
 
+    # Clear GPU cache after training to free memory
+    if device.type == 'cuda':
+        torch.cuda.empty_cache()
+
     return checkpoint_path
 
 def sample_model(config: DiffusionConfig, checkpoint_path: str, device: torch.device) -> None:
     """Generate samples from trained model and visualize.
-      
+
       Args:
           config: Configuration object with hyperparameters
           checkpoint_path: Path to trained model checkpoint
@@ -77,8 +113,8 @@ def sample_model(config: DiffusionConfig, checkpoint_path: str, device: torch.de
     # Create beta schedule
     betas = linear_beta_schedule(config.timesteps, config.beta_start, config.beta_end)
 
-    # Create model
-    model = NoisePredictor(seq_length=config.seq_length, hidden_dim=config.hidden_dim, time_dim=config.time_dim).to(device)
+    # Create model (must match training architecture)
+    model = create_model(config, device)
 
     # Create diffusion object
     diffusion = Diffusion1D(

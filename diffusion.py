@@ -75,14 +75,16 @@ class Diffusion1D:
         # Extract shape
         batch_size, seq_length = shape
 
-        # Initialize with pure noise
-        x_t = torch.randn(batch_size, seq_length).to(self.device)
+        # Sampling doesn't need gradients - saves memory!
+        with torch.no_grad():
+            # Initialize with pure noise
+            x_t = torch.randn(batch_size, seq_length).to(self.device)
 
-        # Iteratively apply reverse diffusion
-        for t in reversed(range(self.timesteps)):
-            t_batch = torch.full((batch_size,), t, dtype=torch.long).to(self.device)
-            eta = torch.ones(batch_size).to(self.device)  # Can be adjusted for different noise levels
-            x_t, _ = self.p_sample(x_t, t_batch, eta)
+            # Iteratively apply reverse diffusion
+            for t in reversed(range(self.timesteps)):
+                t_batch = torch.full((batch_size,), t, dtype=torch.long).to(self.device)
+                eta = torch.ones(batch_size).to(self.device)  # Can be adjusted for different noise levels
+                x_t, _ = self.p_sample(x_t, t_batch, eta)
 
         return x_t
 
