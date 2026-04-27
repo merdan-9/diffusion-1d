@@ -5,6 +5,7 @@ from typing import Optional
 import torch
 
 from diffusion import Diffusion1D
+from guidance import SineWaveGuidance
 
 from utils import set_seed
 
@@ -15,6 +16,7 @@ def generate_sequences(
     seq_length: int,
     device: torch.device,
     seed: Optional[int] = None,
+    guidance: Optional[SineWaveGuidance] = None,
 ) -> torch.Tensor:
     """Sample new sine-like sequences using the trained diffusion model."""
     set_seed(seed or 42)
@@ -23,6 +25,6 @@ def generate_sequences(
     shape = (num_samples, seq_length)
 
     # Generate samples
-    samples = diffusion.sample(shape)
+    samples = diffusion.sample(shape, guidance=guidance)
 
     return samples

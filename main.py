@@ -8,6 +8,7 @@ from torch import optim
 from config import DiffusionConfig
 from data import build_dataloader
 from diffusion import Diffusion1D
+from guidance import build_sine_guidance
 from model import NoisePredictor
 from model_unet import UNet1D
 from sampling import generate_sequences
@@ -131,12 +132,14 @@ def sample_model(config: DiffusionConfig, checkpoint_path: str, device: torch.de
 
     print("Generating samples...")
     num_samples = 16
+    guidance = build_sine_guidance(config)
     samples = generate_sequences(
         diffusion=diffusion,
         num_samples=num_samples,
         seq_length=config.seq_length,
         device=device,
-        seed=42
+        seed=42,
+        guidance=guidance,
     )
 
     noise = torch.randn_like(samples)

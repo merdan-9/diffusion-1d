@@ -29,3 +29,13 @@ class DiffusionConfig:
     learning_rate: float = 1e-3
     num_epochs: int = 50
     device: str = "cuda"
+
+    # Optional model-based sine guidance during sampling
+    enable_sine_guidance: bool = True
+    sine_guidance_scale: float = 0.01
+    sine_guidance_start_fraction: float = 0.5
+    sine_guidance_amplitude_limit: float = 1.25
+    sine_guidance_amplitude_weight: float = 0.1
+    sine_guidance_min_frequency: float = 1.0
+    sine_guidance_max_frequency: float = 5.0
+    sine_guidance_num_steps: int = 1

@@ -1,9 +1,10 @@
 """Core diffusion process logic for 1-D trajectories."""
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 
+from guidance import SineWaveGuidance
 from model import NoisePredictor
 from schedules import compute_alphas_cumprod
 
@@ -70,21 +71,28 @@ class Diffusion1D:
         return x_prev, noise_pred
 
 
-    def sample(self, shape: Tuple[int, int]) -> torch.Tensor:
+    def sample(
+        self,
+        shape: Tuple[int, int],
+        guidance: Optional[SineWaveGuidance] = None,
+    ) -> torch.Tensor:
         """Generate new trajectories by iterating the reverse process."""
         # Extract shape
         batch_size, seq_length = shape
 
-        # Sampling doesn't need gradients - saves memory!
-        with torch.no_grad():
-            # Initialize with pure noise
-            x_t = torch.randn(batch_size, seq_length).to(self.device)
+        # Initialize with pure noise
+        x_t = torch.randn(batch_size, seq_length).to(self.device)
 
-            # Iteratively apply reverse diffusion
-            for t in reversed(range(self.timesteps)):
+        # Iteratively apply reverse diffusion
+        for t in reversed(range(self.timesteps)):
+            # The learned DDPM step does not need gradients.
+            with torch.no_grad():
                 t_batch = torch.full((batch_size,), t, dtype=torch.long).to(self.device)
                 eta = torch.ones(batch_size).to(self.device)  # Can be adjusted for different noise levels
                 x_t, _ = self.p_sample(x_t, t_batch, eta)
+
+            if guidance is not None and guidance.should_apply(t, self.timesteps):
+                x_t = guidance.apply(x_t)
 
         return x_t
 
